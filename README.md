@@ -9,6 +9,7 @@ Autonomous agents generate commands which programmatically finds the answer in a
 ### WebArena: A Realistic Web Environment for Building Autonomous Agents
 [[Code](https://github.com/web-arena-x/webarena)]
 [[Site](https://webarena.dev/)]
+[[Paper](https://arxiv.org/2307.13854)]
 - Web environment 
     - websites from four categories (forum, ecommerce, CMS, collaborative software platforms) that emulate their real-world equivalents
     - "tools and knowledge resources as independent websites" (map, wiki, calculator, scratchpad, documentation to dev tools)
@@ -16,12 +17,13 @@ Autonomous agents generate commands which programmatically finds the answer in a
     - Functional correctness: Allows for alternate methods that achieve the same outcome, rather than be constrained to one fixed GT action sequence
 - Benchmark on translating natural language commands to web-based interactions, checking for functional correctness
     - 812 long horizon tasks
-        - max number of sites involved in a task is 2
-        - Generated from 190 template types ("intent", see below), of which (via manual inspection, figures might be off by a bit!) 
+        - max number of sites involved in a task is 2 (accounting for 5.9% of tasks)
+        - (older ver) Generated from 190 template types ("intent", see below), of which (via manual inspection, figures might be off by a bit!) 
             - 115 are stateless/ info retrieval
             - 68 are stateful-internal (i.e. they change the state/ db but only affects personal and NPC accounts, does not interfere with other agents in a multi-agent env)
             - 7 are stateful-external (task answers are dependent on current state, which can be written by other agents in a multi-agent env) 
             - Needs deeper evaluation eg a high score may mean an agent does well on all tasks of the same template, compared to a broader agent which can score decent in many templates. Maybe using a 'mean template-average' score might be more useful   
+        - (paper v3) 241 templates
     - user profiles (pre-populated history, various roles like user and admin)
     - Intent curation
         - 3 criteria: complexity (>2 actions), creativity (adding constraints to common tasks), deconstruction (task is broken down into templates and variables)
@@ -33,9 +35,14 @@ Autonomous agents generate commands which programmatically finds the answer in a
 - Observation space: screenshot, HTML DOM tree, accessibility tree of active tab (can have other tabs in browser too)
 - Action space: 10 actions in 3 categories (elemental operations like clicking, tab operations like opening a new tab, URL operations like going back) + 1 noop
 - Baselines
-    - best GPT agent (GPT4 with reasoning prompts) has success rate 10.59%, potentially due to lack of active exploration and failure recovery
+    - agents: GPT3.5-16k-0613, GPT4-0613, text-bison-001
+    - best GPT agent (GPT4 with reasoning prompts) has success rate 14.4%, potentially due to lack of active exploration and failure recovery
         - my comment: I occasionally see some factual qns that can be answered via zero shot (eg "Which US states border Massachusetts"), might skew the metrics
-    - of 41 templates, GPT4 agent only gets 100% on 1 template
+    - ablation over with and without CoT (more like ReACT), and with n without UA Hint (including the possibility of unachievable tasks in the prompt)
+        - In general, with CoT boosts performance of ~ 2.3%
+        - UA Hint decreases GPT4 performance (causes it to early stop too much) but increases GPT3.5 performance (probably cos it doesnt reason as well)
+    - of 61 templates, GPT4 agent only gets 100% on 4 templates while GPT3.5 does not achieve this for any template, suggesting that even changing the arguments in the templates can throw off base models
+    - Human: 78.2% (via sampling 1 task from each of 170 templates)
     - Failure modes
         - Early stopping: GPT4 agent erroneously identifies 54.9% of feasible tasks as impossible
         - Observation bias: "GPT-4 agent often demonstrates a tendency to latch onto the first related piece of information it encounters without sufficiently verifying its relevance or accuracy" 
