@@ -6,6 +6,77 @@ Autonomous agents generate commands which programmatically finds the answer in a
 ---
 # Benchmarks / Datasets
 
+## Mixed
+
+### GAIA: a benchmark for General AI Assistants
+[[Paper](https://arxiv.org/pdf/2311.12983.pdf)]
+[[HF](https://huggingface.co/gaia-benchmark)]
+
+"the answers to our questions are factoid, concise and unambiguous. These properties allow simple, fast and factual evaluation. Our questions are meant to be answered in zero shot, limiting the influence of the evaluation setup"
+#### capabilities tested
+- web browsing
+	- eg Web browser, Search engine, Website widget access, Access to YouTube, Google Street View
+- coding
+	- eg Python, a calculator, Substitution cipher encoder, C++ compiler, A word reversal tool / script
+- multi-modality
+	-  eg speech-to-text tool, Video recognition, Image recognition, OCR, Google Street View
+- diverse filetype reading
+	- eg PDF viewer, Excel file access, PowerPoint viewer, CSV access, Txt file access.
+- N/A: tools for tasks that can currently be performed by non-augmented LLMs. 
+	- Examples: Tetris rules database, German translator, Spell checker, Text Editor, Bass note data.
+
+ Example: working with xlsx files to answer data analysis qns
+
+#### Difficulties
+- Level 1 questions generally require no tools, or at most one tool but no more than 5 steps.
+- Level 2 question generally involve more steps, roughly between 5 and 10 and combining different tools
+is needed.
+- Level 3 are questions for a near perfect general assistant, requiring to take arbitrarily long sequences of
+actions, use any number of tools, and access to the world in general.
+
+#### Baselines
+- Humans score ~90% range for all 3 levels.
+- Level 1: LMs ( + tools ) generally score in the 20-30% range
+- Level 2: models score ~ 10%
+- Level 3: models score ~0%
+
+### AgentBench: Evaluating LLMs as Agents
+[[Code](https://github.com/THUDM/AgentBench)]
+[[Site](https://llmbench.ai/)]
+- Benchmark to evaluate agents across a spectrum of 8 envs
+- These 8 envs are separate -- each task only involves 1 env
+
+**New envs**
+
+| Env Name  | Description | Contents/ Construction| Evaluation|
+| --- | ---- | --- | --- |
+|OS | natural lang to shell commands. 2 tasks: QA (agent needs to output ans) and operations (eg change files. agent needs to output commands) |Instruction, docker env, checking pipeline. Optional scripts for initialization, starting, examples | evaluated via success rate (binary)|
+|DB | natural lang to interact w SQL DB | each sample contains the instruction, codebook, the table itself, and the answer (text for selection type samples, hash of the correctly modified table for other entry type) | macro avg of the 3 categories (not sure which 3. initialization, interaction and checking?)|
+|KG | compiled a dataset from pre-existing KBQA datasets such as GrailQA, ComplexWebQuestions, GraphQuestions. curate qns which necessitate >= 5 instances of tool invocation | input qn, entities, gold action sequence, gold ans| F1 between pred and gold, exact match between pred and gold, executability |
+| Digital card game| Aquawar game | creatures are initially hidden, creatures can attack each other and player can guess the opponent's creatures. This env uses a simplified version of the game. | Completion rate, avg num of illegal action, num defeated creatures, total dmg inflicted, winrate|
+| lateral thinking puzzles | Game where players ask questions to a host where the host can only reply 'yes', 'no' or 'irrelevant', in order to guess what the host has in mind |story - truth pair| Single game accuracy, round efficiency, query relevance, game progress (points for intermediate steps)|
+
+
+**Recompiled envs**
+
+| Env Name  | Description | Contents/ Construction| Evaluation|
+| -------- | ------- | --- | --- |
+| House-holding (ALFWorld) | Embodied agent simulator | env desc (eg agents initial position, snapshot of room containing objects and IDs), objective, feedback from env | Success rate (rate of tasks completed) |
+| online shopping (WebShop) | web env with prodts scraped from amazon and attributes annotated | input: products to buy. outputs: thoughts and actions | see metric in paper, related to the similarity in attributes of the bought and GT item, and a price term |
+| web browsing (Mind2Web) | domains of Travel, Information, Sevice, Shopping, and Entertainment, assembled using SimilarWeb ranking | task description, reference action sequence (element ids, symbolic action types like click, type and select options), webpage info | element accuracy, action F1, step (intermediate) and task success rate|
+
+- Integrated toolkit with docker images for ease of use
+- LLM Evaluation
+    - 289 tasks in dev, 1141 in test. Multi-turn interaction requires agent to generate ~4k and 13k steps respectively to solve the tasks
+    - Standardization of scores across tasks: in each task, the weight is the reciprocal of avg score of all tested LLMs. then the total score is computed by a weighted sum of scores with the above weights
+    - in a sense, the scores signify the model's performance in terms of multiples of the average
+    - evaluated on 25 LLMs, scores are ~ 4.41 for top closed source models (GPT4) and 1.15 for open source models (openchat-13b). Per task scores are typically in the double digits for closed models (eg GPT4 gets 17.6%-78%) and single digits/ teens for open sourced models (eg openchat-13b's per task score ranges from 0-50.2%)
+- analysis
+    - common error: invalid actions
+    - open sourced models are limited by context size (esp when the tasks are multi-turn)
+    - some models forget their roles
+    
+## Web
 ### WebArena: A Realistic Web Environment for Building Autonomous Agents
 [[Code](https://github.com/web-arena-x/webarena)]
 [[Site](https://webarena.dev/)]
@@ -47,41 +118,6 @@ Autonomous agents generate commands which programmatically finds the answer in a
         - Early stopping: GPT4 agent erroneously identifies 54.9% of feasible tasks as impossible
         - Observation bias: "GPT-4 agent often demonstrates a tendency to latch onto the first related piece of information it encounters without sufficiently verifying its relevance or accuracy" 
         - Failures in Observation Interpretation: eg not remembering past searches and repeatedly searching same term
-    
-
-### AgentBench: Evaluating LLMs as Agents
-[[Code](https://github.com/THUDM/AgentBench)]
-[[Site](https://llmbench.ai/)]
-- Benchmark to evaluate agents across a spectrum of 8 envs
-- These 8 envs are separate -- each task only involves 1 env
-
-**New envs**
-| Env Name  | Description | Contents/ Construction| Evaluation|
-| -------- | ------- | --- | --- |
-|OS | natural lang to shell commands. 2 tasks: QA (agent needs to output ans) and operations (eg change files. agent needs to output commands) |Instruction, docker env, checking pipeline. Optional scripts for initialization, starting, examples | evaluated via success rate (binary)|
-|DB | natural lang to interact w SQL DB | each sample contains the instruction, codebook, the table itself, and the answer (text for selection type samples, hash of the correctly modified table for other entry type) | macro avg of the 3 categories (not sure which 3. initialization, interaction and checking?)|
-|KG | compiled a dataset from pre-existing KBQA datasets such as GrailQA, ComplexWebQuestions, GraphQuestions. curate qns which necessitate >= 5 instances of tool invocation | input qn, entities, gold action sequence, gold ans| F1 between pred and gold, exact match between pred and gold, executability |
-| Digital card game| Aquawar game | creatures are initially hidden, creatures can attack each other and player can guess the opponent's creatures. This env uses a simplified version of the game. | Completion rate, avg num of illegal action, num defeated creatures, total dmg inflicted, winrate|
-| lateral thinking puzzles | Game where players ask questions to a host where the host can only reply 'yes', 'no' or 'irrelevant', in order to guess what the host has in mind |story - truth pair| Single game accuracy, round efficiency, query relevance, game progress (points for intermediate steps)|
-
-
-**Recompiled envs**
-| Env Name  | Description | Contents/ Construction| Evaluation|
-| -------- | ------- | --- | --- |
-| House-holding (ALFWorld) | Embodied agent simulator | env desc (eg agents initial position, snapshot of room containing objects and IDs), objective, feedback from env | Success rate (rate of tasks completed) |
-| online shopping (WebShop) | web env with prodts scraped from amazon and attributes annotated | input: products to buy. outputs: thoughts and actions | see metric in paper, related to the similarity in attributes of the bought and GT item, and a price term |
-| web browsing (Mind2Web) | domains of Travel, Information, Sevice, Shopping, and Entertainment, assembled using SimilarWeb ranking | task description, reference action sequence (element ids, symbolic action types like click, type and select options), webpage info | element accuracy, action F1, step (intermediate) and task success rate|
-
-- Integrated toolkit with docker images for ease of use
-- LLM Evaluation
-    - 289 tasks in dev, 1141 in test. Multi-turn interaction requires agent to generate ~4k and 13k steps respectively to solve the tasks
-    - Standardization of scores across tasks: in each task, the weight is the reciprocal of avg score of all tested LLMs. then the total score is computed by a weighted sum of scores with the above weights
-    - in a sense, the scores signify the model's performance in terms of multiples of the average
-    - evaluated on 25 LLMs, scores are ~ 4.41 for top closed source models (GPT4) and 1.15 for open source models (openchat-13b). Per task scores are typically in the double digits for closed models (eg GPT4 gets 17.6%-78%) and single digits/ teens for open sourced models (eg openchat-13b's per task score ranges from 0-50.2%)
-- analysis
-    - common error: invalid actions
-    - open sourced models are limited by context size (esp when the tasks are multi-turn)
-    - some models forget their roles
     
 
 ### Mind2Web: Towards a Generalist Agent for the Web
@@ -135,22 +171,112 @@ Autonomous agents generate commands which programmatically finds the answer in a
         - however i see in the DOM tree that there are some JS libraries included -- maybe that can be used to predict the dynamics of the website?
     - Fixed GT trajectory -- might have alternate trajectories which achieve same goal
 
-
 ### WebShop: Towards a Generalist Agent for the Web
 [[Code](https://github.com/princeton-nlp/WebShop)]
 [[Site](https://webshop-pnlp.github.io/)]
-
+web env with prodts scraped from amazon and attributes annotated 
+- action space
+	- `search` a text \[Query\]
+	- `choose` a \[Product Title\] in `results`
+	- `choose` an \[option\] eg `color`
+	- check `item-detail`
+	- `Buy`
+	- navigate to search or prev/ next page in results
 ### MiniWob++
 [[Code](https://github.com/Farama-Foundation/miniwob-plusplus)]
 
 largely solved (close to perfect accuracy) 
 
+## Mobile apps
+### AppAgent: Multimodal Agents as Smartphone Users
+- 50 tasks across 10 different apps "ranging from social media and messaging to email, maps, shopping, and even complex image editing apps"
+- action space
+	- `Tap(element : int)`
+	- `Long_press(element : int)`
+	- `Swipe ( element : int, direction : str, dist : str)`
+	- `Text(text : str)` for typing
+	- `Back()`
+	- `Exit()`
+- baselines, success rate when max 10 steps to finish task
+	- GPT4, with their action space (48.9%) and also with raw action space (2.2%)
+	- AppAgent
+		- auto exploration (interacts with apps and learns from outcomes, summarized in a doc) (73.3%)
+		- watching demos from humans (84.4%)
+		- manually crafted documents as oracle (95.6%)
+	
+## Embodied envs
+### ALFWorld: ALIGNING TEXT AND EMBODIED ENVIRONMENTS FOR INTERACTIVE LEARNING
+[[GH](https://github.com/alfworld/alfworld)]
+[[Paper](https://arxiv.org/pdf/2010.03768.pdf)]
+[[Site](https://alfworld.github.io/)]
+Builds on top of ALFRED but with interactive aligned text via TextWorld framework, so agent can perform actions on objects instead of coordinates. 
+
+Example high level text action from paper:
+
+| Actions | Templates |
+| ---- | ---- |
+| goto | (a) You arrive at `{loc id}`. On the `{recep id}`, you see a `{obj1 id}`, ... and a `{objN id}`. (b) You arrive at `{loc id}`. The `{recep id}` is closed. (c) You arrive at `{loc id}`. The `{recep id}` is open. On it, you see a `{obj1 id}`, ... and a `{objN id}`. |
+
+Example task-type and goal desc template
+
+| task-type | Templates |
+| ---- | ---- |
+| Pick & Place | (a) put a `{obj}` in `{recep}`. (b) put some `{obj}` on `{recep}`. |
+
+### ALFRED: A Benchmark for Interpreting Grounded Instructions for Everyday Tasks
+[[Paper](https://arxiv.org/abs/1912.01734)]
+[[GH](https://github.com/askforalfred/alfred)]
+- Simulated household env where agent can perform actions on coordinates
+- Comes with task info, scene info, language annotations, expert demonstration in PDDL, images
+
+example of Expert Demonstration:
+```
+['plan'] = {'high_pddl':
+                ...,
+                ["high_idx": 4,                          (high-level subgoal index)
+                 "discrete_action":                    
+                     {"action": "PutObject",             (discrete high-level action)
+                      "args": ["bread", "microwave"],    (discrete params)
+                 "planner_action": <PDDL_ACTION> ],      (PDDL action)
+                ...],
+                 
+            'low_actions': 
+                ...,
+                ["high_idx": 1,                          (high-level subgoal index)
+                 "discrete_action":
+                     {"action": "PickupObject",          (discrete low-level action)
+                      "args": 
+                          {"bbox": [180, 346, 332, 421]} (bounding box for interact action)
+                           "mask": [0, 0, ... 1, 1]},    (compressed pixel mask for interact action)
+                 "api_action": <API_CMD> ],              (THOR API command for replay)
+                ...], 
+           }
+```
+
+
+## Gridworld
+### ASK YOUR HUMANS: USING HUMAN INSTRUCTIONS TO IMPROVE GENERALIZATION IN REINFORCEMENT LEARNING
+[[Paper](https://arxiv.org/pdf/2011.00517.pdf)]
+- aka "Mini Minecraft"
+
+- Gridworld where agents can traverse to complete tasks (eg collect materials to craft items, open doors). action space of 8 (up, down, left, right, toggle, grab, mine, and craft.)
+
+## Text
+### TextCraft
+[[Paper](https://arxiv.org/pdf/2311.05772.pdf)]
+text only env for crafting Minecraft items
+- action space:
+	- craft `<item>` using `<ingredients>`
+	- get `<item>`
+	- `inventory`
+- inherently decomposable
+- hierarchy of complexity: to craft some items, other crafted items are required, so agent must identify such dependencies / complexities
+- some recipes allow using any item from a particular category, requiring the agent to use linguistic knowledge for proper item selection (e.g. crafting a beehive uses planks, and the agent can potentially select oak planks, a specific item in the plank category)
+
 
 ------
 
-# Papers
-
-Currently only those that work on WebShop as that environment is mature enough to have methods attempting to tackle it, but still remains challenging
+# Methods
 
 ### ReAct
 [[Paper](https://arxiv.org/abs/2210.03629)]
