@@ -76,6 +76,10 @@ actions, use any number of tools, and access to the world in general.
     - open sourced models are limited by context size (esp when the tasks are multi-turn)
     - some models forget their roles
     
+
+### AssistGUI
+[Paper](https://arxiv.org/pdf/2312.13108.pdf)
+Benchmark released soon
 ## Web
 ### WebArena: A Realistic Web Environment for Building Autonomous Agents
 [[Code](https://github.com/web-arena-x/webarena)]
@@ -174,7 +178,7 @@ actions, use any number of tools, and access to the world in general.
 ### WebShop: Towards a Generalist Agent for the Web
 [[Code](https://github.com/princeton-nlp/WebShop)]
 [[Site](https://webshop-pnlp.github.io/)]
-web env with prodts scraped from amazon and attributes annotated 
+web env with prodts scraped from amazon and attributes annotated.  67% SOTA (need to update this fig)
 - action space
 	- `search` a text \[Query\]
 	- `choose` a \[Product Title\] in `results`
@@ -182,6 +186,10 @@ web env with prodts scraped from amazon and attributes annotated
 	- check `item-detail`
 	- `Buy`
 	- navigate to search or prev/ next page in results
+
+### WebVLN
+[Paper](https://arxiv.org/pdf/2312.15820.pdf)
+[Repo](https://github.com/WebVLN/WebVLN)
 ### MiniWob++
 [[Code](https://github.com/Farama-Foundation/miniwob-plusplus)]
 
@@ -209,6 +217,7 @@ largely solved (close to perfect accuracy)
 [[GH](https://github.com/alfworld/alfworld)]
 [[Paper](https://arxiv.org/pdf/2010.03768.pdf)]
 [[Site](https://alfworld.github.io/)]
+
 Builds on top of ALFRED but with interactive aligned text via TextWorld framework, so agent can perform actions on objects instead of coordinates. 
 
 Example high level text action from paper:
@@ -226,6 +235,7 @@ Example task-type and goal desc template
 ### ALFRED: A Benchmark for Interpreting Grounded Instructions for Everyday Tasks
 [[Paper](https://arxiv.org/abs/1912.01734)]
 [[GH](https://github.com/askforalfred/alfred)]
+
 - Simulated household env where agent can perform actions on coordinates
 - Comes with task info, scene info, language annotations, expert demonstration in PDDL, images
 
@@ -329,3 +339,7 @@ Features:
 - break into subtasks, then use tools to try and achieve those
     - wiki: " manages short-term and long-term memory by writing to and reading from databases and files; manages context window length requirements with summarization; can perform internet-based actions such as web searching, web form, and API interactions unattended; and includes text-to-speech for voice output"
 - issues: wiki " Auto-GPT often also has trouble staying on task, both problems which developers continue to try to address. After successfully completing a task, it usually does not remember how to perform it for later use, and when it does, for example when it writes a program, it often forgets to use the program later. Auto-GPT struggles to effectively decompose tasks and has trouble understanding problem contexts and how goals overlap"
+
+---
+# Misc
+[adversarial examples for agents](https://arxiv.org/pdf/2402.11208.pdf)
